@@ -19,13 +19,29 @@ namespace Bot_App.Dialogs
         {
             var activity = await result as Activity;
 
+            // Split the currency the user wants to convert by comma
+            string[] splitValue = activity.Text.Split(',');
+            for (int i = 0; i < splitValue.Length; i++)
+            {
+                splitValue[i] = splitValue[i].Trim();
+            }
+
+            // Called the Yahoo API to do the conversion
+            string exchange = await GetExchangeRate(splitValue[0], splitValue[1]);
+
             // calculate something for us to return
             int length = (activity.Text ?? string.Empty).Length;
 
             // return our reply to the user
-            await context.PostAsync($"You have sent {activity.Text} which was {length} characters");
-
+            // await context.PostAsync($"You have sent {activity.Text} which was {length} characters");
+            await context.PostAsync($"Your Conversion {exchange}");
             context.Wait(MessageReceivedAsync);
+        }
+
+        private async Task<string> GetExchangeRate(string fromCur, string toCur)
+        {
+            exchangerate newRate = new exchangerate();
+            return newRate.conversionRate(fromCur, toCur);
         }
     }
 }
