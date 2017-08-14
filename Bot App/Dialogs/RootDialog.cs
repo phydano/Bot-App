@@ -25,9 +25,10 @@ namespace Bot_App.Dialogs
             {
                 splitValue[i] = splitValue[i].Trim();
             }
+            exchangerate ex = new exchangerate();
 
             // Called the Yahoo API to do the conversion
-            string exchange = await GetExchangeRate(splitValue[0], splitValue[1]);
+            string exchange = await ex.GetExchangeRate(splitValue[0], splitValue[1]);
 
             // calculate something for us to return
             int length = (activity.Text ?? string.Empty).Length;
@@ -36,12 +37,6 @@ namespace Bot_App.Dialogs
             // await context.PostAsync($"You have sent {activity.Text} which was {length} characters");
             await context.PostAsync($"Your Conversion {exchange}");
             context.Wait(MessageReceivedAsync);
-        }
-
-        private async Task<string> GetExchangeRate(string fromCur, string toCur)
-        {
-            exchangerate newRate = new exchangerate();
-            return newRate.conversionRate(fromCur, toCur);
         }
     }
 }

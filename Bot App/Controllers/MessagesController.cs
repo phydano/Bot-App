@@ -18,7 +18,7 @@ namespace Bot_App
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                await Conversation.SendAsync(activity, () => new Dialogs.RootDialog());
+                await Conversation.SendAsync(activity, () => new Dialogs.LUISDialog());
             }
             else
             {

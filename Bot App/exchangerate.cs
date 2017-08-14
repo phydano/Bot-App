@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 
 /* The Exchange Rate class */
@@ -28,6 +29,12 @@ namespace Bot_App
                 Console.Out.WriteLine(e.ToString()); // print out the error to console if there is any
                 return "unknown"; // return unknown to the user 
             }
+        }
+
+        public async Task<string> GetExchangeRate(string fromCur, string toCur)
+        {
+            exchangerate newRate = new exchangerate();
+            return newRate.conversionRate(fromCur, toCur);
         }
     }
 }
