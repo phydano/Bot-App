@@ -20,6 +20,7 @@ namespace Bot_App
             {
                 await Conversation.SendAsync(activity, () => new Dialogs.LUISDialog());
             }
+            
             else
             {
                 HandleSystemMessage(activity);

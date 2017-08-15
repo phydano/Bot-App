@@ -34,6 +34,12 @@ namespace Bot_App.Dialogs
             // Calculate using Yahoo API and give the result back to the user
             exchangerate ex = new exchangerate();
             await context.PostAsync($"Your Conversion {await ex.GetExchangeRate(fromCur, toCur)}");
+            
+            // TODO: out of place...post the info to the database
+            contosouserinfo user = new contosouserinfo();
+            user.name = "Test";
+            await AzureService.serviceInstance.Post(user);
+            //
             context.Wait(MessageReceived);
         }
 
