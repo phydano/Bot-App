@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
+using System;
+using System.Linq;
 
 namespace Bot_App
 {
@@ -41,6 +43,16 @@ namespace Bot_App
                 // Handle conversation state changes, like members being added and removed
                 // Use Activity.MembersAdded and Activity.MembersRemoved and Activity.Action for info
                 // Not available in all channels
+                // The below code is just to give out the welcome message to the user who first connected to the bot
+                var connection = new ConnectorClient(new Uri(message.ServiceUrl), new MicrosoftAppCredentials());
+                if (message.MembersAdded != null && message.MembersAdded.Any())
+                {
+                    foreach (var member in message.MembersAdded)
+                    {
+                        if (member.Id != message.Recipient.Id)
+                            connection.Conversations.ReplyToActivityAsync(message.CreateReply("Welcome to Consoto Online Chat Bot!"));
+                    }
+                }
             }
             else if (message.Type == ActivityTypes.ContactRelationUpdate)
             {

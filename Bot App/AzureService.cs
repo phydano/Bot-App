@@ -13,8 +13,8 @@ namespace Bot_App
     {
         public static AzureService instance;
         public MobileServiceClient mobileClient;
-        public IMobileServiceTable<contosouserinfo> customerdata;
-        public List<contosouserinfo> customerList;
+        public IMobileServiceTable<contosouserinfo> customerdata; // this is our database 
+        private contosouserinfo user = new contosouserinfo(); // user for which we manipulate for CRUD operations
 
         public AzureService()
         {
@@ -33,16 +33,43 @@ namespace Bot_App
             }
         }
 
-        // This method POST the data to the Easytable
-        public async Task Post(contosouserinfo data)
+        // This method POST the a new user to the Easytable SQL database
+        public async Task Post(string id, string name, string secretcode)
         {
-            await this.customerdata.InsertAsync(data);
+            user.ID = id;
+            user.name = name;
+            user.secretcode = secretcode;
+            await this.customerdata.InsertAsync(user);
         }
 
-        // This method Get the customer
-        public async Task Get(string id)
+        // This method UPDATE the data to the Easytable
+        // Assuming the given id, name, or secretcode matched
+        public async Task Update(string id, string name, string secretcode)
         {
-             await this.customerdata.LookupAsync(id);
+            user.ID = id;
+            user.name = name;
+            user.secretcode = secretcode;
+            await this.customerdata.UpdateAsync(user);
+        }
+
+        // This method DELETE the data in the Easytable
+        // We only need the ID to delete the customer from the database 
+        public async Task Delete(string id)
+        {
+            user.ID = id;
+            await this.customerdata.DeleteAsync(user);
+        }
+
+        // This method matched the name of the user to find out if that user exists in the database
+        public async Task<contosouserinfo> Get(string name)
+        {   
+            List<contosouserinfo> users = await this.customerdata.ToListAsync();
+            foreach(contosouserinfo user in users)
+            {
+                if (user.name.Equals(name)) return user; // return the user that is matched 
+                else return null; // no user is matched
+            }
+            return null; // nothing is matched 
         }
     }
 }

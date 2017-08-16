@@ -15,5 +15,9 @@ namespace Bot_App
         // The name coloumn, where we get or set the name of the customer
         [JsonProperty(PropertyName = "Name")]
         public string name { get; set; }
+
+        // The code coloumn, where we get or set the customer secret code to verify their identity
+        [JsonProperty(PropertyName = "Code")]
+        public string secretcode { get; set; }
     }
 }
