@@ -19,5 +19,9 @@ namespace Bot_App
         // The code coloumn, where we get or set the customer secret code to verify their identity
         [JsonProperty(PropertyName = "Code")]
         public string secretcode { get; set; }
+
+        // The balance coloumn, where we get or set the customer's balance
+        [JsonProperty(PropertyName = "Balance")]
+        public double balance { get; set; }
     }
 }

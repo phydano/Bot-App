@@ -34,40 +34,62 @@ namespace Bot_App
         }
 
         // This method POST the a new user to the Easytable SQL database
-        public async Task Post(string id, string name, string secretcode)
+        public async Task Post(string id, string name, string secretcode, double balance)
         {
+            user = new contosouserinfo();
             user.ID = id;
             user.name = name;
             user.secretcode = secretcode;
+            user.balance = balance;
             await this.customerdata.InsertAsync(user);
         }
 
-        // This method UPDATE the data to the Easytable
-        // Assuming the given id, name, or secretcode matched
-        public async Task Update(string id, string name, string secretcode)
+        // Get the current user 
+        public contosouserinfo getCurrentUser()
         {
-            user.ID = id;
-            user.name = name;
-            user.secretcode = secretcode;
-            await this.customerdata.UpdateAsync(user);
+            return user;
+        }
+
+        // This method UPDATE the balance of the user to the Easytable
+        // Assuming the given id, name, or secretcode matched
+        public async Task<Boolean> Update(string id, double balance)
+        {
+            List<contosouserinfo> users = await this.customerdata.ToListAsync();
+            foreach (contosouserinfo user in users)
+            {
+                if (user.ID.Equals(id))
+                {
+                    user.balance += balance;
+                    await this.customerdata.UpdateAsync(user);
+                    return true;
+                }
+            }
+            return false; // no user is matched  
         }
 
         // This method DELETE the data in the Easytable
         // We only need the ID to delete the customer from the database 
-        public async Task Delete(string id)
+        public async Task<Boolean> Delete(string id)
         {
-            user.ID = id;
-            await this.customerdata.DeleteAsync(user);
+            List<contosouserinfo> users = await this.customerdata.ToListAsync();
+            foreach (contosouserinfo user in users)
+            {
+                if (user.ID.Equals(id))
+                {
+                    await this.customerdata.DeleteAsync(user);
+                    return true;
+                }
+            }
+            return false; // no user is matched   
         }
 
         // This method matched the name of the user to find out if that user exists in the database
-        public async Task<contosouserinfo> Get(string name)
+        public async Task<contosouserinfo> Get(string id)
         {   
             List<contosouserinfo> users = await this.customerdata.ToListAsync();
             foreach(contosouserinfo user in users)
             {
-                if (user.name.Equals(name)) return user; // return the user that is matched 
-                else return null; // no user is matched
+                if (user.ID.Equals(id)) return user; // return the user that is matched 
             }
             return null; // nothing is matched 
         }

@@ -16,6 +16,7 @@ namespace Bot_App.Dialogs
     public class LUISDialog : LuisDialog<object>
     {
         public string fullName = ""; // fullname of the person
+        public string usercode = ""; // the four secret digits code of the user
 
         // Currency Conversion Intent
         [LuisIntent("CurrencyConversion")]
@@ -38,9 +39,6 @@ namespace Bot_App.Dialogs
             exchangerate ex = new exchangerate();
             await context.PostAsync($"Your Conversion {await ex.GetExchangeRate(fromCur, toCur)}");
             // TODO: out of place...post the info to the database
-            // contosouserinfo user = new contosouserinfo();
-            // user.name = "Test";
-            // await AzureService.serviceInstance.Post(user);
             // Example of updating
             // contosouserinfo user2 = new contosouserinfo();
             // user2.ID = "2d49d3b6-9785-4377-b510-49a67af72661";
@@ -60,17 +58,110 @@ namespace Bot_App.Dialogs
         [LuisIntent("Register")]
         public async Task Add(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Please tell me your full name");
-            context.Wait(MessageReceived);
+            PromptDialog.Text(context, username, $"Pease tell me your full name");
+        }
+
+        // If the intent is updating the customer's balance
+        [LuisIntent("AddMoney")]
+        public async Task Update(IDialogContext context, LuisResult result)
+        {
+            double amount = 0;
+            string account = "";
+            EntityRecommendation thisAmount;
+            EntityRecommendation thisAccount;
+
+            if (result.TryFindEntity("Amount", out thisAmount)) amount = Double.Parse(thisAmount.Entity);
+            else await context.PostAsync($"Incorrect Amount");
+
+            if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
+            else await context.PostAsync($"Incorrect Account");
+
+            await context.PostAsync($"Account is: {account}");
+
+            if (await AzureService.serviceInstance.Update(account, amount))
+            {
+                await context.PostAsync($"You have deposited ${amount} to your account");
+                context.Wait(MessageReceived);
+            }
+            else
+            {
+                await context.PostAsync($"Incorrect Account Number");
+                context.Wait(MessageReceived);
+            }
         }
 
         // If the intent is adding the customer to the bank
-        [LuisIntent("FullName")]
-        public async Task Name(IDialogContext context, LuisResult result)
+        [LuisIntent("GetBalance")]
+        public async Task Retrieve(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Your fullname is: {result.Dialog.ToString()}");
-            await context.PostAsync($"Great, now please tell me your 4 digits secret code");
-            context.Wait(MessageReceived);
+            string account = "";
+            EntityRecommendation thisAccount;
+
+            if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
+            else await context.PostAsync($"Incorrect Account");
+
+            contosouserinfo user = await AzureService.serviceInstance.Get(account);
+            if(user != null) // if the user exists 
+            {
+                await context.PostAsync($"Your balance is: ${user.balance}");
+                context.Wait(MessageReceived);
+            }
+            else // if the user does not exists 
+            {
+                await context.PostAsync($"Incorrect Account");
+                context.Wait(MessageReceived);
+            }
+        }
+
+        // If the intent is adding the customer to the bank
+        [LuisIntent("Delete")]
+        public async Task RemoveUser(IDialogContext context, LuisResult result)
+        {
+            string account = "";
+            EntityRecommendation thisAccount;
+
+            if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
+            else await context.PostAsync($"Incorrect Account");
+
+            if (await AzureService.serviceInstance.Delete(account)) // if the user exists 
+            {
+                await context.PostAsync($"Sorry to hear you go. We have removed you from our system");
+                context.Wait(MessageReceived);
+            }
+            else // if the user does not exists 
+            {
+                await context.PostAsync($"Incorrect Account");
+                context.Wait(MessageReceived);
+            }
+        }
+
+        private async Task username(IDialogContext context, IAwaitable<string> result)
+        {
+            string userinput = await result;
+            if (userinput != null || userinput != "")
+            {
+                fullName = userinput;
+                await context.PostAsync($"Your fullname is: {userinput}");
+                PromptDialog.Text(context, secretcode, $"For security of your account, please enter a 4 digit code");
+            }
+            else
+            {
+                PromptDialog.Text(context, username, $"There is no name input. Please try again");
+            }
+        }
+
+        private async Task secretcode(IDialogContext context, IAwaitable<string> result)
+        {
+            string userinput = await result;
+            if(userinput != null || userinput != "")
+            {
+                usercode = userinput;
+                await context.PostAsync($"Your code is: {userinput}");
+                await context.PostAsync($"Great your are now registered with us");
+                await AzureService.serviceInstance.Post(randomIDGenerator(),fullName, usercode, 0);
+                await context.PostAsync($"Your ID is: {AzureService.serviceInstance.getCurrentUser().ID}");
+                context.Wait(MessageReceived);
+            }
         }
 
         // If the intent does not matched (None)
@@ -79,6 +170,17 @@ namespace Bot_App.Dialogs
         {
             await context.PostAsync($"Sorry I could not interpret what you are saying");
             context.Wait(MessageReceived);
+        }
+
+        // A simple randomly geneated number for the user ID
+        public string randomIDGenerator()
+        {
+            Random random = new Random();
+            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // A string of characters 
+            int firstChar = random.Next(0, chars.Length - 1); // randomly select a character
+            int secondChar = random.Next(0, chars.Length - 1); 
+            int randomNumber = random.Next(10000, 99999); // randomly select a number
+            return (chars[firstChar].ToString()+ chars[secondChar].ToString() + randomNumber.ToString());
         }
     }
 }
