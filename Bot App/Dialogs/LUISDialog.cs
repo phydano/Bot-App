@@ -135,6 +135,7 @@ namespace Bot_App.Dialogs
             }
         }
 
+        // Ask the user for their name and their four digit secret code (a PIN)
         private async Task username(IDialogContext context, IAwaitable<string> result)
         {
             string userinput = await result;
@@ -150,6 +151,7 @@ namespace Bot_App.Dialogs
             }
         }
 
+        // Post the users to the Database 
         private async Task secretcode(IDialogContext context, IAwaitable<string> result)
         {
             string userinput = await result;
@@ -162,6 +164,38 @@ namespace Bot_App.Dialogs
                 await context.PostAsync($"Your ID is: {AzureService.serviceInstance.getCurrentUser().ID}");
                 context.Wait(MessageReceived);
             }
+        }
+
+        // If the intent is Help, give the users a redirect URL to the website 
+        [LuisIntent("Help")]
+        public async Task Help(IDialogContext context, LuisResult result)
+        {
+            var messageReply = context.MakeMessage(); // this is the reply         
+            messageReply.Attachments = new List<Attachment>(); 
+            List<CardImage> image = new List<CardImage>(); // the card image 
+            image.Add(new CardImage("https://support.content.office.net/en-us/media/8b3b440b-e110-4127-9fea-691ebd8bc33e.png"));
+
+            // The card action which is a redirect to the specified URL
+            CardAction cardAction = new CardAction()
+            {
+                Title = "Contoso Bank Support",
+                Type = "openUrl",
+                Value = "https://www.microsoft.com/en-nz"
+            };
+
+            // This is our thumbnail displaying the text
+            ThumbnailCard thumnail = new ThumbnailCard()
+            {
+                Title = "Help?",
+                Subtitle = "For more help, please visit our support site",
+                Images = image,
+                Buttons = new List<CardAction>()
+            };
+            thumnail.Buttons.Add(cardAction);
+            messageReply.Attachments.Add(thumnail.ToAttachment());
+
+            await context.PostAsync(messageReply);
+            context.Wait(MessageReceived);
         }
 
         // If the intent does not matched (None)

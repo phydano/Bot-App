@@ -50,7 +50,7 @@ namespace Bot_App
                     foreach (var member in message.MembersAdded)
                     {
                         if (member.Id != message.Recipient.Id)
-                            connection.Conversations.ReplyToActivityAsync(message.CreateReply("Welcome to Consoto Online Chat Bot!"));
+                            connection.Conversations.ReplyToActivityAsync(message.CreateReply("Welcome to Contoso Online Chat Bot!"));
                     }
                 }
             }
