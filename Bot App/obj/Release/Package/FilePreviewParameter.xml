@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="IIS Web Application Name" description="" value="Contoso-Bot" tags="IisApp">
+    <parameterEntry kind="ProviderPath" scope="IisApp" match="^C:\\Users\\Dano\\Documents\\Github\\Bot-App\\Bot\ App\\obj\\Release\\Package\\PackageTmp$" />
+    <parameterEntry kind="ProviderPath" scope="setAcl" match="^C:\\Users\\Dano\\Documents\\Github\\Bot-App\\Bot\ App\\obj\\Release\\Package\\PackageTmp$" />
+  </parameter>
+</parameters>
