@@ -4,21 +4,26 @@ using System.Linq;
 using System.Web;
 using Microsoft.WindowsAzure.MobileServices;
 using System.Threading.Tasks;
+using System.Web.Http;
+using Newtonsoft.Json.Linq;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using System.Data.SqlClient;
 
 namespace Bot_App
 {
     /* This class defines the connection to the Azure Service webserver
-         */
+    */
     public class AzureService
     {
         public static AzureService instance;
         public MobileServiceClient mobileClient;
         public IMobileServiceTable<contosouserinfo> customerdata; // this is our database 
         private contosouserinfo user = new contosouserinfo(); // user for which we manipulate for CRUD operations
+        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(); // authentication to the SQL database
 
         public AzureService()
         {
-            this.mobileClient = new MobileServiceClient("http://contosobanklimited.azurewebsites.net");
+            this.mobileClient = new MobileServiceClient("https://contosobanklimited.azurewebsites.net");
             this.customerdata = this.mobileClient.GetTable<contosouserinfo>();
         }
 
@@ -31,6 +36,17 @@ namespace Bot_App
                 if (instance == null) instance = new AzureService();
                 return instance;
             }
+        }
+
+        // This is a method to authenticate myself as an admin to the SQL database
+        public void Authentication()
+        {
+            this.builder.DataSource = "contosobankltd.database.windows.net";
+            this.builder.UserID = "phydano";
+            this.builder.Password = "BleachBraveSOul01";
+            this.builder.InitialCatalog = "BankUsers";
+            SqlConnection connection = new SqlConnection(builder.ConnectionString);
+            connection.Open();
         }
 
         // This method POST the a new user to the Easytable SQL database

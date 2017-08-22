@@ -22,6 +22,7 @@ namespace Bot_App.Dialogs
         [LuisIntent("CurrencyConversion")]
         public async Task CurrencyConversion(IDialogContext context, LuisResult result)
         {
+            var message = context.MakeMessage();
             string fromCur = ""; // store the currency the user wants to convert from
             string toCur = ""; // store the currency the user wants to convert to
             EntityRecommendation fromEnt; // Entity LUIS determines
@@ -38,19 +39,7 @@ namespace Bot_App.Dialogs
             // Calculate using Yahoo API and give the result back to the user
             exchangerate ex = new exchangerate();
             await context.PostAsync($"Your Conversion {await ex.GetExchangeRate(fromCur, toCur)}");
-            // TODO: out of place...post the info to the database
-            // Example of updating
-            // contosouserinfo user2 = new contosouserinfo();
-            // user2.ID = "2d49d3b6-9785-4377-b510-49a67af72661";
-            // user2.name = "Test2";
-            // await AzureService.serviceInstance.Update(user2);
-            // Example of getting
-            // Boolean test = await AzureService.serviceInstance.Get("2d49d3b6-9785-4377-b510-49a67af72661");
-            // await context.PostAsync($"Your Result is {test}");
-            // Example of deleting 
-            // contosouserinfo user2 = new contosouserinfo();
-            // user2.ID = "2d49d3b6-9785-4377-b510-49a67af72661";
-            // await AzureService.serviceInstance.Delete(user2);
+
             context.Wait(MessageReceived);
         }
 
@@ -69,6 +58,8 @@ namespace Bot_App.Dialogs
             string account = "";
             EntityRecommendation thisAmount;
             EntityRecommendation thisAccount;
+        
+            var username = context.UserData.GetValue<string>("username"); // get the person who deposit the money
 
             if (result.TryFindEntity("Amount", out thisAmount)) amount = Double.Parse(thisAmount.Entity);
             else await context.PostAsync($"Incorrect Amount");
@@ -76,11 +67,11 @@ namespace Bot_App.Dialogs
             if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
             else await context.PostAsync($"Incorrect Account");
 
-            await context.PostAsync($"Account is: {account}");
+            // await context.PostAsync($"Account is: {account}");
 
             if (await AzureService.serviceInstance.Update(account, amount))
             {
-                await context.PostAsync($"You have deposited ${amount} to your account");
+                await context.PostAsync($"{username} have deposited ${amount} to your account");
                 context.Wait(MessageReceived);
             }
             else
@@ -154,13 +145,16 @@ namespace Bot_App.Dialogs
         // Post the users to the Database 
         private async Task secretcode(IDialogContext context, IAwaitable<string> result)
         {
-            string userinput = await result;
-            if(userinput != null || userinput != "")
+            var activity = context.MakeMessage();
+            var userinput = await result;
+            if (userinput != null || userinput != "")
             {
                 usercode = userinput;
                 await context.PostAsync($"Your code is: {userinput}");
                 await context.PostAsync($"Great your are now registered with us");
-                await AzureService.serviceInstance.Post(randomIDGenerator(),fullName, usercode, 0);
+                await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, usercode, 0);
+                // It seems like it only remembers in this method context only.....
+                context.UserData.SetValue<string>("username", fullName); // we will remember this registerd user
                 await context.PostAsync($"Your ID is: {AzureService.serviceInstance.getCurrentUser().ID}");
                 context.Wait(MessageReceived);
             }
@@ -170,7 +164,7 @@ namespace Bot_App.Dialogs
         [LuisIntent("Help")]
         public async Task Help(IDialogContext context, LuisResult result)
         {
-            var messageReply = context.MakeMessage(); // this is the reply         
+            var messageReply = context.MakeMessage(); // this is the reply
             messageReply.Attachments = new List<Attachment>(); 
             List<CardImage> image = new List<CardImage>(); // the card image 
             image.Add(new CardImage("https://support.content.office.net/en-us/media/8b3b440b-e110-4127-9fea-691ebd8bc33e.png"));

@@ -20,6 +20,11 @@ namespace Bot_App
         {
             if (activity.Type == ActivityTypes.Message)
             {
+                // If the user is added to the database, I want to save their name
+                StateClient stateClient = activity.GetStateClient();
+                BotData userData = await stateClient.BotState.GetUserDataAsync(activity.ChannelId, activity.From.Id);
+                userData.SetProperty<string>("username", activity.From.Name);
+                await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
                 await Conversation.SendAsync(activity, () => new Dialogs.LUISDialog());
             }
             
@@ -58,6 +63,13 @@ namespace Bot_App
             {
                 // Handle add/remove from contact lists
                 // Activity.From + Activity.Action represent what happened
+                // If the bot is added to the conversation
+                if (message.Action == "add")
+                {
+                    var reply = message.CreateReply("Welcome to Contoso Online Chat Bot!");
+                    new ConnectorClient(new Uri(message.ServiceUrl)).Conversations.ReplyToActivityAsync(reply);
+                }
+
             }
             else if (message.Type == ActivityTypes.Typing)
             {

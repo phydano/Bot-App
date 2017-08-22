@@ -43,3 +43,13 @@ C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\zh-hans\Microsoft.Bot.Builder
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\obj\Release\Bot App.csprojResolveAssemblyReference.cache
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\obj\Release\Bot Application.dll
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\obj\Release\Bot Application.pdb
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.pdb
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.pdb
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.xml

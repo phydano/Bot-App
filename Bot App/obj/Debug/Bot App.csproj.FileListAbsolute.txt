@@ -86,3 +86,13 @@ C:\Users\Dano\Documents\Github\Bot-App\Bot App\obj\Debug\Bot Application.dll
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\obj\Debug\Bot Application.pdb
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.Azure.Mobile.Client.dll
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.Azure.Mobile.Client.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.dll
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.pdb
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.pdb
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.xml
