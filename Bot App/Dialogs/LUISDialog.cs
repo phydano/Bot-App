@@ -58,8 +58,9 @@ namespace Bot_App.Dialogs
             string account = "";
             EntityRecommendation thisAmount;
             EntityRecommendation thisAccount;
-        
-            var username = context.UserData.GetValue<string>("username"); // get the person who deposit the money
+
+            if(!fullName.Equals("")) context.UserData.SetValue<string>("username", fullName); // we will remember this registerd user
+            var username = context.UserData.GetValue<string>("username"); // get the name of the user 
 
             if (result.TryFindEntity("Amount", out thisAmount)) amount = Double.Parse(thisAmount.Entity);
             else await context.PostAsync($"Incorrect Amount");
@@ -134,11 +135,7 @@ namespace Bot_App.Dialogs
             {
                 fullName = userinput;
                 await context.PostAsync($"Your fullname is: {userinput}");
-                PromptDialog.Text(context, secretcode, $"For security of your account, please enter a 4 digit code");
-            }
-            else
-            {
-                PromptDialog.Text(context, username, $"There is no name input. Please try again");
+                PromptDialog.Text(context, secretcode, $"Please Enter the 4 digits PIN code: ");
             }
         }
 
@@ -147,16 +144,57 @@ namespace Bot_App.Dialogs
         {
             var activity = context.MakeMessage();
             var userinput = await result;
-            if (userinput != null || userinput != "")
+            bool digitsOnly = true; // assuming that the 4 digits are actually digits
+            // Check that thse user must only input digits
+            if (userinput.Length != 4)
+            { // this will be an infinite loop until the user enters a 4-digit PIN
+                PromptDialog.Text(context, secretcode, $"Sorry the numbers you entered are not 4 digits, Please re-enter:");
+                return;
+            }
+            else // now if the character length is 4, we need to check if it contains only Digits number 
             {
-                usercode = userinput;
-                await context.PostAsync($"Your code is: {userinput}");
-                await context.PostAsync($"Great your are now registered with us");
-                await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, usercode, 0);
-                // It seems like it only remembers in this method context only.....
-                context.UserData.SetValue<string>("username", fullName); // we will remember this registerd user
-                await context.PostAsync($"Your ID is: {AzureService.serviceInstance.getCurrentUser().ID}");
-                context.Wait(MessageReceived);
+                foreach (char c in userinput)
+                {
+                    if (Char.IsDigit(c))
+                    {
+                        digitsOnly = true;
+                    }
+                    else digitsOnly = false;
+                }
+                if (!digitsOnly) // If it contains non-digits
+                { // an infinite loop until the users enter a 4 digits PIN code. 
+                    PromptDialog.Text(context, secretcode, $"Sorry the numbers you entered are not 4 digits, Please re-enter:");
+                    return;
+                }
+            }
+            // Now we going to push the new user to the database 
+            if (userinput != null || digitsOnly)
+            {
+                usercode = userinput; // remember the usercode (PIN)
+                var userid = ""; // to store the userid
+                await context.PostAsync($"Your code is: {userinput}"); // confirm this code back to the user
+                try
+                {
+                    await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
+                    userid = AzureService.serviceInstance.getCurrentUser().ID;
+                    context.Wait(MessageReceived);
+                }
+                catch(Exception e)
+                {
+                    Console.Write(e.ToString()); // output the error to the console 
+                }
+                finally
+                {
+                    // If the current UserID is empty or null, we know there is a problem so we report the error 
+                    if(userid.Equals("") || userid == null)
+                        await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                    else
+                    {
+                        await context.PostAsync($"Great your are now registered with us");
+                        await context.PostAsync($"Your ID is: {userid}");
+                    }
+                }
+
             }
         }
 
@@ -196,11 +234,14 @@ namespace Bot_App.Dialogs
         [LuisIntent("")]
         public async Task None(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Sorry I could not interpret what you are saying");
+            await context.PostAsync($"Sorry I could not interpret what you are saying. For any help, please type 'Help'");
             context.Wait(MessageReceived);
         }
 
-        // A simple randomly geneated number for the user ID
+        /* A simple randomly geneated number for the user ID
+         * The first 2 digits are characters randomly generated from Cap A-Z
+         * The following 5 digits are randomly generated numbers from 10000 - 99999
+         */
         public string randomIDGenerator()
         {
             Random random = new Random();

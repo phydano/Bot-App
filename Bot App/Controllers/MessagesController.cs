@@ -20,7 +20,7 @@ namespace Bot_App
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                // If the user is added to the database, I want to save their name
+                // Save state : Name of the user
                 StateClient stateClient = activity.GetStateClient();
                 BotData userData = await stateClient.BotState.GetUserDataAsync(activity.ChannelId, activity.From.Id);
                 userData.SetProperty<string>("username", activity.From.Name);
