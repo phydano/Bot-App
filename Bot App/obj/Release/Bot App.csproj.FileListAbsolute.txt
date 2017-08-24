@@ -53,3 +53,4 @@ C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.pdb
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.xml
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.pdb
 C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Plugin.Settings.Abstractions.xml
+C:\Users\Dano\Documents\Github\Bot-App\Bot App\bin\Microsoft.ProjectOxford.Text.dll

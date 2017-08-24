@@ -55,6 +55,12 @@ namespace Bot_App.Dialogs
             PromptDialog.Text(context, username, $"Pease tell me your full name");
         }
 
+        // An overload method which is for user friendly interactions 
+        public async Task Add(IDialogContext context)
+        {
+            PromptDialog.Text(context, username, $"Pease tell me your full name");
+        }
+
         // If the intent is updating the customer's balance
         [LuisIntent("AddMoney")]
         public async Task Update(IDialogContext context, LuisResult result)
@@ -243,7 +249,18 @@ namespace Bot_App.Dialogs
         public async Task Greetings(IDialogContext context, LuisResult result)
         {
             await context.PostAsync($"Hello there. With the bot service, you register/de-register, deposit, check balance with us.");
-            context.Wait(MessageReceived);
+            PromptDialog.Confirm(context, OptionsSelection, $"Would you like to register?");
+        }
+
+        // 
+        private async Task OptionsSelection(IDialogContext context, IAwaitable<bool> result)
+        {
+            if (await result) await Add(context); // add the user by going through the registration process
+            else // otherwise we assume that they are already with us
+            {
+                await context.PostAsync($"Welcome back!!!");
+                context.Wait(MessageReceived);
+            }
         }
 
         // If the intent does not matched (None)
