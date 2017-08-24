@@ -11,16 +11,12 @@ namespace Bot_App
      */
     public class TextAnalytics
     {
-        SentimentClient client;
-
-        public TextAnalytics()
-        {
-            this.client = new SentimentClient(ConfigurationManager.AppSettings["TextAnalyticsApiKey"]); // my API key
-        }
+        private static SentimentClient client;
 
         // This methods perform the text analysis and return the score
-        public async Task<string> TextAnalysis(string message)
+        public static async Task<string> TextAnalysis(string message)
         {
+            client = new SentimentClient(ConfigurationManager.AppSettings["TextAnalyticsApiKey"]); // my API Key
             var request = new SentimentRequest();
             var text = new SentimentDocument()
             {

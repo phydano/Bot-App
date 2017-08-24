@@ -4,9 +4,7 @@ using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Bot_App.Dialogs
 {
@@ -30,16 +28,23 @@ namespace Bot_App.Dialogs
 
             // Find out the Entity is there
             if (result.TryFindEntity("FromCurrency", out fromEnt)) fromCur = fromEnt.Entity;
-            else await context.PostAsync($"No such currency");
+            else
+            {
+                await context.PostAsync($"There is no such currency. Please try again");
+                return;
+            }
 
             // Find out the Entity is there
             if (result.TryFindEntity("ToCurrency", out toEnt)) toCur = toEnt.Entity;
-            else await context.PostAsync($"No such currency");
+            else
+            {
+                await context.PostAsync($"There is no such currency. Please try again");
+                return;
+            }
 
             // Calculate using Yahoo API and give the result back to the user
             exchangerate ex = new exchangerate();
             await context.PostAsync($"Your Conversion {await ex.GetExchangeRate(fromCur, toCur)}");
-
             context.Wait(MessageReceived);
         }
 
@@ -63,23 +68,22 @@ namespace Bot_App.Dialogs
             var username = context.UserData.GetValue<string>("username"); // get the name of the user 
 
             if (result.TryFindEntity("Amount", out thisAmount)) amount = Double.Parse(thisAmount.Entity);
-            else await context.PostAsync($"Incorrect Amount");
-
-            if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
-            else await context.PostAsync($"Incorrect Account");
-
-            // await context.PostAsync($"Account is: {account}");
-
-            if (await AzureService.serviceInstance.Update(account, amount))
-            {
-                await context.PostAsync($"{username} have deposited ${amount} to your account");
-                context.Wait(MessageReceived);
-            }
             else
             {
-                await context.PostAsync($"Incorrect Account Number");
-                context.Wait(MessageReceived);
+                await context.PostAsync($"The amount is incorrect. Please try again");
+                return;
             }
+
+            if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
+            else
+            {
+                await context.PostAsync($"The account number is invalid. Please try again");
+                return;
+            }
+
+            if (await AzureService.serviceInstance.Update(account, amount)) await context.PostAsync($"{username} have deposited ${amount} to your account");
+            else await context.PostAsync($"The account number is invalid. Please try again");
+            context.Wait(MessageReceived);
         }
 
         // If the intent is adding the customer to the bank
@@ -90,19 +94,18 @@ namespace Bot_App.Dialogs
             EntityRecommendation thisAccount;
 
             if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
-            else await context.PostAsync($"Incorrect Account");
+            else
+            {
+                await context.PostAsync($"The account number is invalid. Please try again");
+                return;
+            }
 
             contosouserinfo user = await AzureService.serviceInstance.Get(account);
-            if(user != null) // if the user exists 
-            {
-                await context.PostAsync($"Your balance is: ${user.balance}");
-                context.Wait(MessageReceived);
-            }
-            else // if the user does not exists 
-            {
-                await context.PostAsync($"Incorrect Account");
-                context.Wait(MessageReceived);
-            }
+            // If the user exists
+            if(user != null) await context.PostAsync($"Your balance is: ${user.balance}");
+            // Otherwise
+            else await context.PostAsync($"The account number is invalid. Please try again");
+            context.Wait(MessageReceived);
         }
 
         // If the intent is adding the customer to the bank
@@ -113,18 +116,17 @@ namespace Bot_App.Dialogs
             EntityRecommendation thisAccount;
 
             if (result.TryFindEntity("Account", out thisAccount)) account = thisAccount.Entity.ToUpper();
-            else await context.PostAsync($"Incorrect Account");
+            else
+            {
+                await context.PostAsync($"The account number is invalid. Please try again");
+                return;
+            }
 
             if (await AzureService.serviceInstance.Delete(account)) // if the user exists 
-            {
                 await context.PostAsync($"Sorry to hear you go. We have removed you from our system");
-                context.Wait(MessageReceived);
-            }
             else // if the user does not exists 
-            {
-                await context.PostAsync($"Incorrect Account");
-                context.Wait(MessageReceived);
-            }
+                await context.PostAsync($"The account number is invalid. Please try again");
+            context.Wait(MessageReceived);
         }
 
         // Ask the user for their name and their four digit secret code (a PIN)
@@ -134,7 +136,6 @@ namespace Bot_App.Dialogs
             if (userinput != null || userinput != "")
             {
                 fullName = userinput;
-                await context.PostAsync($"Your fullname is: {userinput}");
                 PromptDialog.Text(context, secretcode, $"Please Enter the 4 digits PIN code: ");
             }
         }
@@ -167,12 +168,10 @@ namespace Bot_App.Dialogs
             // Now we going to push the new user to the database 
             usercode = userinput; // remember the usercode (PIN)
             var userid = ""; // to store the userid
-            await context.PostAsync($"Your code is: {userinput}"); // confirm this code back to the user
             try
             {
                 await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
                 userid = AzureService.serviceInstance.getCurrentUser().ID;
-                context.Wait(MessageReceived);
             }
             catch (Exception e)
             {
@@ -181,14 +180,30 @@ namespace Bot_App.Dialogs
             finally
             {
                 // If the current UserID is empty or null, we know there is a problem so we report the error 
-                if (userid.Equals("") || userid == null)
-                    await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
-                else
-                {
-                    await context.PostAsync($"Great your are now registered with us");
-                    await context.PostAsync($"Your ID is: {userid}");
-                }
+                if (userid.Equals("") || userid == null) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                else await context.PostAsync($"Great your are now registered with us. Your ID is: {userid}");
+                PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
             }
+        }
+
+        // Do the tasks depend on whether the user wants to continue or not
+        private async Task Continuation(IDialogContext context, IAwaitable<bool> result)
+        {
+            if (await result)
+            {
+                await context.PostAsync($"Sure");
+                context.Wait(MessageReceived);
+            }
+            else PromptDialog.Text(context, feedback, $"Thank you for using the Bot service. Please tell me how I did: ");
+            
+        }
+
+        // This method is to get the feedback from the user and generated the Score base on the Text Analytics API
+        private async Task feedback(IDialogContext context, IAwaitable<string> result)
+        {
+            var score = await TextAnalytics.TextAnalysis(await result);
+            await context.PostAsync($"You rate us as {score}%");
+            context.Wait(MessageReceived);
         }
 
         // If the intent is Help, give the users a redirect URL to the website 
@@ -220,6 +235,14 @@ namespace Bot_App.Dialogs
             messageReply.Attachments.Add(thumnail.ToAttachment());
 
             await context.PostAsync(messageReply);
+            context.Wait(MessageReceived);
+        }
+
+        // If the intent is anywords relate to greetings. We should display options to users
+        [LuisIntent("Greetings")]
+        public async Task Greetings(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync($"Hello there. With the bot service, you register/de-register, deposit, check balance with us.");
             context.Wait(MessageReceived);
         }
 
