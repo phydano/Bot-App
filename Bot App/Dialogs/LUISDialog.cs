@@ -155,10 +155,7 @@ namespace Bot_App.Dialogs
             {
                 foreach (char c in userinput)
                 {
-                    if (Char.IsDigit(c))
-                    {
-                        digitsOnly = true;
-                    }
+                    if (Char.IsDigit(c)) digitsOnly = true;
                     else digitsOnly = false;
                 }
                 if (!digitsOnly) // If it contains non-digits
@@ -168,33 +165,29 @@ namespace Bot_App.Dialogs
                 }
             }
             // Now we going to push the new user to the database 
-            if (userinput != null || digitsOnly)
+            usercode = userinput; // remember the usercode (PIN)
+            var userid = ""; // to store the userid
+            await context.PostAsync($"Your code is: {userinput}"); // confirm this code back to the user
+            try
             {
-                usercode = userinput; // remember the usercode (PIN)
-                var userid = ""; // to store the userid
-                await context.PostAsync($"Your code is: {userinput}"); // confirm this code back to the user
-                try
+                await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
+                userid = AzureService.serviceInstance.getCurrentUser().ID;
+                context.Wait(MessageReceived);
+            }
+            catch (Exception e)
+            {
+                Console.Write(e.ToString()); // output the error to the console 
+            }
+            finally
+            {
+                // If the current UserID is empty or null, we know there is a problem so we report the error 
+                if (userid.Equals("") || userid == null)
+                    await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                else
                 {
-                    await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
-                    userid = AzureService.serviceInstance.getCurrentUser().ID;
-                    context.Wait(MessageReceived);
+                    await context.PostAsync($"Great your are now registered with us");
+                    await context.PostAsync($"Your ID is: {userid}");
                 }
-                catch(Exception e)
-                {
-                    Console.Write(e.ToString()); // output the error to the console 
-                }
-                finally
-                {
-                    // If the current UserID is empty or null, we know there is a problem so we report the error 
-                    if(userid.Equals("") || userid == null)
-                        await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
-                    else
-                    {
-                        await context.PostAsync($"Great your are now registered with us");
-                        await context.PostAsync($"Your ID is: {userid}");
-                    }
-                }
-
             }
         }
 
