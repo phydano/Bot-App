@@ -20,12 +20,6 @@ namespace Bot_App
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                // Save state : Name of the user
-                StateClient stateClient = activity.GetStateClient();
-                BotData userData = await stateClient.BotState.GetUserDataAsync(activity.ChannelId, activity.From.Id);
-                userData.SetProperty<string>("username", activity.From.Name);
-                await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
-
                 await Conversation.SendAsync(activity, () => new Dialogs.LUISDialog());
             }
            
