@@ -23,8 +23,10 @@ namespace Bot_App
 
         public AzureService()
         {
-            this.mobileClient = new MobileServiceClient("https://contosobanklimited.azurewebsites.net");
+            this.mobileClient = new MobileServiceClient("https://contosobanklimited.azurewebsites.net"); // default none-auth URL
+            //this.mobileClient = new MobileServiceClient("https://contosobanklimited.azurewebsites.net/.auth/login/aad/callback");
             this.customerdata = this.mobileClient.GetTable<contosouserinfo>();
+            
         }
 
         public MobileServiceClient serviceClient { get { return mobileClient; } }
