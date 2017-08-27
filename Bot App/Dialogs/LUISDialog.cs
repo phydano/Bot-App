@@ -16,10 +16,13 @@ namespace Bot_App.Dialogs
         private string fullName = ""; // fullname of the person
         private string usercode = ""; // the four secret digits code of the user
         private bool welcome; // whether the use has been previosuly with us or not 
-        private string howToUse = "To use the Bot: \n * For Deposit: Type 'Deposit' to your account number. " +
-                    $"\n * For Balance: Type 'Balance' on your account number. " +
-                    $"\n * For Register: Type 'Register' to the bank. " +
-                    $"\n * For De-register: Type 'Remove' your account number. \n ";
+        private string accountNum; // remember the user acc number 
+        private string howToUse = "To use the Bot: " +
+            "\n * For Deposit: Type 'Deposit' to your account number (E.g. Deposit $10 to RX12345)." +
+                    $"\n * For Balance: Type 'Balance' on your account number (E.g. Balance on RX12345)." +
+                    $"\n * For Register: Type 'Register' (E.g. Register me to the bank)." +
+                    $"\n * For De-register: Type 'Remove' your account number (E.g. Remove RX12345)." +
+            $"\n * For Currency Conversion: Type 'CurrencyX' to 'CurrencyY' (E.g. NZD to USD)";
 
 
         // Currency Conversion Intent
@@ -50,8 +53,8 @@ namespace Bot_App.Dialogs
 
             // Calculate using Yahoo API and give the result back to the user
             exchangerate ex = new exchangerate();
-            await context.PostAsync($"Your Conversion {await ex.GetExchangeRate(fromCur, toCur)}");
-            context.Wait(MessageReceived);
+            await context.PostAsync($"Your Conversion base on a $1 value is: {await ex.GetExchangeRate(fromCur, toCur)}");
+            PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
         }
 
         // If the intent is adding the customer to the bank
@@ -84,9 +87,54 @@ namespace Bot_App.Dialogs
                 return;
             }
 
-            if (await AzureService.serviceInstance.Update(account, amount)) await context.PostAsync($"{fullName} have deposited ${amount} to your account");
-            else await context.PostAsync($"The account number is invalid. Please try again");
-            context.Wait(MessageReceived);
+            if (await AzureService.serviceInstance.Update(account, amount))
+            {
+                accountNum = account;
+                await context.PostAsync($"{fullName} have deposited ${amount} to your account");
+                PromptDialog.Confirm(context, MoreDeposit, $"Do you want to do any more deposit?");
+            }
+            else
+            {
+                await context.PostAsync($"The account number is invalid. Please try again");
+                context.Wait(MessageReceived);
+            }
+            
+        }
+
+        // Confirm whether the user wants to do any more deposit 
+        private async Task MoreDeposit(IDialogContext context, IAwaitable<bool> result)
+        {
+            if (await result)
+            {
+                PromptDialog.Text(context, DepositMoreMoney, $"Ok, please tell me how much more you want to deposit?");
+            }
+            else PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
+        }
+
+        // Deposit the money to the user account without repeatingly asking for the account number 
+        private async Task DepositMoreMoney(IDialogContext context, IAwaitable<string> result)
+        {
+            var depositAmount = await result;
+            double amount; // the amount in double
+            // First of all check whether the amount to deposit has any '$' sign in it or not
+            if (depositAmount.Contains("$")) {
+                string[] part = depositAmount.Split('$'); // strip the '$' sign away
+                depositAmount = string.Join("", part); // join back the string together
+            }
+            // If the input is not a $ value
+            if (Double.TryParse(depositAmount, out amount))
+            {
+                if (await AzureService.serviceInstance.Update(accountNum, amount))
+                {
+                    await context.PostAsync($"{fullName} have deposited ${amount} more to your account");
+                    PromptDialog.Confirm(context, MoreDeposit, $"Do you want to do any more deposit?");
+                }
+            }
+            else // now the value is definitely unreadable - hence not a number 
+            {
+                PromptDialog.Text(context, DepositMoreMoney, $"The balance input is incorrect, please try again:");
+                return;
+            }
         }
 
         // If the intent is adding the customer to the bank
@@ -105,10 +153,17 @@ namespace Bot_App.Dialogs
 
             contosouserinfo user = await AzureService.serviceInstance.Get(account);
             // If the user exists
-            if(user != null) await context.PostAsync($"Your balance is: ${user.balance}");
+            if (user != null)
+            {
+                await context.PostAsync($"Your total balance is: ${user.balance}");
+                PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
+            }
             // Otherwise
-            else await context.PostAsync($"The account number is invalid. Please try again");
-            context.Wait(MessageReceived);
+            else
+            {
+                await context.PostAsync($"The account number is invalid. Please try again");
+                context.Wait(MessageReceived);
+            }
         }
 
         // If the intent is adding the customer to the bank
@@ -174,11 +229,10 @@ namespace Bot_App.Dialogs
             }
             // Now we going to push the new user to the database 
             usercode = userinput; // remember the usercode (PIN)
-            var userid = ""; // to store the userid
             try
             {
                 await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
-                userid = AzureService.serviceInstance.getCurrentUser().ID;
+                accountNum = AzureService.serviceInstance.getCurrentUser().ID;
             }
             catch (Exception e)
             {
@@ -187,8 +241,8 @@ namespace Bot_App.Dialogs
             finally
             {
                 // If the current UserID is empty or null, we know there is a problem so we report the error 
-                if (userid.Equals("") || userid == null) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
-                else await context.PostAsync($"Great your are now registered with us. Your ID is: {userid}");
+                if (accountNum.Equals("") || accountNum == null) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                else await context.PostAsync($"Great your are now registered with us. Your ID is: {accountNum}");
                 welcome = true; // remember that the user is registered
                 PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
             }
@@ -202,15 +256,14 @@ namespace Bot_App.Dialogs
                 await context.PostAsync($"Here is some tips to help you use the chat bot. {howToUse}");
                 context.Wait(MessageReceived);
             }
-            else PromptDialog.Text(context, feedback, $"Thank you for using the Bot service. Please tell me how I did: ");
-            
+            else PromptDialog.Text(context, feedback, $"Thank you for using the Bot service. Please tell me how I did:");  
         }
 
         // This method is to get the feedback from the user and generated the Score base on the Text Analytics API
         private async Task feedback(IDialogContext context, IAwaitable<string> result)
         {
             var score = await TextAnalytics.TextAnalysis(await result);
-            await context.PostAsync($"You rate us as {score}%. \r\n {await TextAnalytics.Sentiment(score)}");
+            await context.PostAsync($"You rate us as {double.Parse(score)*100}%. \r\n {await TextAnalytics.Sentiment(score)}");
             context.Wait(MessageReceived);
         }
 
@@ -260,6 +313,11 @@ namespace Bot_App.Dialogs
             if(!welcome){
                 welcome = true;
                 await context.PostAsync($"Welcome Back {fullName}!");
+                context.Wait(MessageReceived);
+            }
+            else
+            {
+                await context.PostAsync($"Reminder: {howToUse}");
                 context.Wait(MessageReceived);
             }
         }
