@@ -14,7 +14,6 @@ namespace Bot_App.Dialogs
     public class LUISDialog : LuisDialog<object>
     {
         private string fullName = ""; // fullname of the person
-        private string usercode = ""; // the four secret digits code of the user
         private bool welcome; // whether the use has been previosuly with us or not 
         private string accountNum; // remember the user acc number 
         private string howToUse = "To use the Bot: " +
@@ -194,7 +193,7 @@ namespace Bot_App.Dialogs
         private async Task username(IDialogContext context, IAwaitable<string> result)
         {
             string userinput = await result;
-            if (userinput != null || userinput != "")
+            if (userinput != "")
             {
                 fullName = userinput;
                 context.UserData.SetValue("username", fullName); // we will remember this registerd user
@@ -228,7 +227,6 @@ namespace Bot_App.Dialogs
                 }
             }
             // Now we going to push the new user to the database 
-            usercode = userinput; // remember the usercode (PIN)
             try
             {
                 await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
@@ -240,8 +238,8 @@ namespace Bot_App.Dialogs
             }
             finally
             {
-                // If the current UserID is empty or null, we know there is a problem so we report the error 
-                if (accountNum.Equals("") || accountNum == null) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                // If the current UserID is empty, we know there is a problem so we report the error 
+                if (accountNum.Equals("")) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
                 else await context.PostAsync($"Great your are now registered with us. Your ID is: {accountNum}");
                 welcome = true; // remember that the user is registered
                 PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
