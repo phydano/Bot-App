@@ -52,7 +52,7 @@ namespace Bot_App.Dialogs
 
             // Calculate using Yahoo API and give the result back to the user
             exchangerate ex = new exchangerate();
-            await context.PostAsync($"Your Conversion base on a $1 value is: {await ex.GetExchangeRate(fromCur, toCur)}");
+            await context.PostAsync($"Your Conversion base on a $1 value is: {ex.conversionRate(fromCur, toCur)}");
             PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");
         }
 
@@ -86,6 +86,7 @@ namespace Bot_App.Dialogs
                 return;
             }
 
+            // If everything is correct then we update the balance 
             if (await AzureService.serviceInstance.Update(account, amount))
             {
                 accountNum = account;
@@ -136,7 +137,7 @@ namespace Bot_App.Dialogs
             }
         }
 
-        // If the intent is adding the customer to the bank
+        // If the intent is getting the current balance
         [LuisIntent("GetBalance")]
         public async Task Retrieve(IDialogContext context, LuisResult result)
         {
@@ -165,7 +166,7 @@ namespace Bot_App.Dialogs
             }
         }
 
-        // If the intent is adding the customer to the bank
+        // If the intent is to remove 
         [LuisIntent("Delete")]
         public async Task RemoveUser(IDialogContext context, LuisResult result)
         {
@@ -201,7 +202,7 @@ namespace Bot_App.Dialogs
             }
         }
 
-        // Post the users to the Database 
+        // Post the users to the Database after getting their 4 digits PIN code
         private async Task secretcode(IDialogContext context, IAwaitable<string> result)
         {
             var activity = context.MakeMessage();
@@ -230,7 +231,6 @@ namespace Bot_App.Dialogs
             try
             {
                 await AzureService.serviceInstance.Post(randomIDGenerator(), fullName, userinput, 0);
-                accountNum = AzureService.serviceInstance.getCurrentUser().ID;
             }
             catch (Exception e)
             {
@@ -238,8 +238,9 @@ namespace Bot_App.Dialogs
             }
             finally
             {
+                accountNum = AzureService.serviceInstance.getCurrentUser().ID;
                 // If the current UserID is empty, we know there is a problem so we report the error 
-                if (accountNum.Equals("")) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
+                if (accountNum.Equals("") || accountNum == null) await context.PostAsync($"Sorry there was a problem during the registration"); // output the message if there is something wrong
                 else await context.PostAsync($"Great your are now registered with us. Your ID is: {accountNum}");
                 welcome = true; // remember that the user is registered
                 PromptDialog.Confirm(context, Continuation, $"Is there anything else I can help you with?");

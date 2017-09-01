@@ -35,7 +35,7 @@ namespace Bot_App
         public static async Task<string> Sentiment(string score)
         {
             if(double.Parse(score) <= 0.7)
-                return "Sorry that our bot service does not meet your expectation. We will continue to improve on it";
+                return "Sorry that our bot service does not meet your expectation. We will continue to improve on it.";
             else // If the score is above 0.7
                 return "Thank you for your feedback. We really glad you like our bot service.";  
         }

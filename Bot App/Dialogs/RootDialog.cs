@@ -28,7 +28,7 @@ namespace Bot_App.Dialogs
             exchangerate ex = new exchangerate();
 
             // Called the Yahoo API to do the conversion
-            string exchange = await ex.GetExchangeRate(splitValue[0], splitValue[1]);
+            string exchange = ex.conversionRate(splitValue[0], splitValue[1]);
 
             // calculate something for us to return
             int length = (activity.Text ?? string.Empty).Length;
